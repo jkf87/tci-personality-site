@@ -32,6 +32,7 @@ body {
     "Segoe UI",
     sans-serif;
   line-height: 1.6;
+  word-break: keep-all;
 }
 
 a {
@@ -134,11 +135,12 @@ p {
 }
 
 h1 {
-  max-width: 780px;
+  max-width: 720px;
   margin-bottom: 22px;
-  font-size: clamp(42px, 7vw, 82px);
+  font-size: clamp(42px, 6vw, 72px);
   line-height: 1.02;
   letter-spacing: 0;
+  overflow-wrap: break-word;
 }
 
 h2 {
