@@ -14,7 +14,7 @@
     />
     <meta property="og:type" content="website" />
     <title>TCI 기질 및 성격검사 가이드</title>
-    <link rel="stylesheet" href="styles.css?v=20260626-test" />
+    <link rel="stylesheet" href="styles.css?v=20260626-share" />
   </head>
   <body>
     <header class="site-header">
@@ -107,6 +107,11 @@
               <ul id="test-insights">
                 <li>문항에 답한 뒤 결과 보기를 누르면 해석이 표시됩니다.</li>
               </ul>
+            </div>
+            <div class="result-actions">
+              <button class="button primary" type="button" id="download-result" disabled>이미지 저장</button>
+              <button class="button secondary" type="button" id="share-result" disabled>공유하기</button>
+              <p id="image-status">결과가 생성되면 PNG 카드로 저장하거나 공유할 수 있습니다.</p>
             </div>
           </aside>
         </div>
@@ -290,6 +295,6 @@
       <a href="#top">위로</a>
     </footer>
 
-    <script src="script.js?v=20260626-test"></script>
+    <script src="script.js?v=20260626-share"></script>
   </body>
 </html>

@@ -470,6 +470,31 @@ h3 {
   font-weight: 900;
 }
 
+.result-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  border-top: 1px solid var(--line);
+  padding-top: 18px;
+}
+
+.result-actions button {
+  cursor: pointer;
+  font: inherit;
+}
+
+.result-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
+}
+
+.result-actions p {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
 .explorer-section {
   width: min(1220px, calc(100% - 36px));
 }
@@ -691,6 +716,10 @@ h3 {
   .scale-guide {
     grid-template-columns: 1fr;
     text-align: left;
+  }
+
+  .result-actions {
+    grid-template-columns: 1fr;
   }
 
   .comparison div {

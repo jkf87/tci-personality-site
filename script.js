@@ -49,6 +49,11 @@ const testChart = document.querySelector("#test-chart");
 const testInsights = document.querySelector("#test-insights");
 const answeredCount = document.querySelector("#answered-count");
 const resetTest = document.querySelector("#reset-test");
+const downloadResult = document.querySelector("#download-result");
+const shareResult = document.querySelector("#share-result");
+const imageStatus = document.querySelector("#image-status");
+let lastTestScores = null;
+let lastTestInsights = [];
 
 function level(value) {
   if (value >= 67) return "높음";
@@ -202,6 +207,191 @@ function applyScoresToExplorer(scores) {
   render();
 }
 
+function setResultActionsEnabled(enabled) {
+  downloadResult.disabled = !enabled;
+  shareResult.disabled = !enabled;
+}
+
+function wrapCanvasText(ctx, text, x, y, maxWidth, lineHeight, maxLines = 4) {
+  const words = text.split(" ");
+  const lines = [];
+  let line = "";
+
+  words.forEach((word) => {
+    const testLine = line ? `${line} ${word}` : word;
+    if (ctx.measureText(testLine).width > maxWidth && line) {
+      lines.push(line);
+      line = word;
+    } else {
+      line = testLine;
+    }
+  });
+
+  if (line) lines.push(line);
+
+  lines.slice(0, maxLines).forEach((item, index) => {
+    const suffix = index === maxLines - 1 && lines.length > maxLines ? "..." : "";
+    ctx.fillText(`${item}${suffix}`, x, y + index * lineHeight);
+  });
+
+  return Math.min(lines.length, maxLines) * lineHeight;
+}
+
+function roundRect(ctx, x, y, width, height, radius) {
+  ctx.beginPath();
+  ctx.moveTo(x + radius, y);
+  ctx.arcTo(x + width, y, x + width, y + height, radius);
+  ctx.arcTo(x + width, y + height, x, y + height, radius);
+  ctx.arcTo(x, y + height, x, y, radius);
+  ctx.arcTo(x, y, x + width, y, radius);
+  ctx.closePath();
+}
+
+function createResultCanvas(scores, insightItems) {
+  const canvas = document.createElement("canvas");
+  canvas.width = 1200;
+  canvas.height = 1600;
+  const ctx = canvas.getContext("2d");
+  const topItems = Object.entries(scores)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 2)
+    .map(([key, value]) => `${key} ${labels[key]} ${value}`)
+    .join(" · ");
+
+  ctx.fillStyle = "#f7f9fc";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.fillStyle = "#d9eadf";
+  ctx.beginPath();
+  ctx.arc(1020, 170, 250, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = "#f5ddd6";
+  ctx.beginPath();
+  ctx.arc(130, 1460, 320, 0, Math.PI * 2);
+  ctx.fill();
+
+  roundRect(ctx, 70, 70, 1060, 1460, 34);
+  ctx.fillStyle = "rgba(255,255,255,0.92)";
+  ctx.fill();
+  ctx.strokeStyle = "#d8dee8";
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  ctx.fillStyle = "#167d7f";
+  ctx.font = "800 28px -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif";
+  ctx.fillText("TCI QUICK SELF CHECK", 120, 145);
+
+  ctx.fillStyle = "#18202b";
+  ctx.font = "900 58px -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif";
+  ctx.fillText("내 TCI 프로파일", 120, 225);
+
+  ctx.fillStyle = "#5d6878";
+  ctx.font = "700 25px -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif";
+  ctx.fillText(`주요 차원: ${topItems}`, 120, 278);
+  ctx.fillText(new Date().toLocaleDateString("ko-KR"), 120, 318);
+
+  let y = 410;
+  dimensionOrder.forEach((key) => {
+    const value = scores[key];
+    ctx.fillStyle = "#26364a";
+    ctx.font = "900 31px -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif";
+    ctx.fillText(key, 120, y + 8);
+
+    ctx.fillStyle = "#5d6878";
+    ctx.font = "700 25px -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif";
+    ctx.fillText(labels[key], 192, y + 8);
+
+    roundRect(ctx, 380, y - 22, 570, 30, 15);
+    ctx.fillStyle = "#edf1f6";
+    ctx.fill();
+
+    roundRect(ctx, 380, y - 22, Math.max(10, Math.round(570 * (value / 100))), 30, 15);
+    ctx.fillStyle = value >= 67 ? "#c95f4b" : value <= 33 ? "#167d7f" : "#b98918";
+    ctx.fill();
+
+    ctx.fillStyle = "#18202b";
+    ctx.font = "900 30px -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif";
+    ctx.textAlign = "right";
+    ctx.fillText(String(value), 1030, y + 8);
+    ctx.textAlign = "left";
+    y += 82;
+  });
+
+  y += 34;
+  ctx.strokeStyle = "#d8dee8";
+  ctx.beginPath();
+  ctx.moveTo(120, y);
+  ctx.lineTo(1080, y);
+  ctx.stroke();
+
+  y += 70;
+  ctx.fillStyle = "#18202b";
+  ctx.font = "900 36px -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif";
+  ctx.fillText("해석 포인트", 120, y);
+  y += 56;
+
+  ctx.fillStyle = "#344154";
+  ctx.font = "700 26px -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif";
+  insightItems.slice(0, 4).forEach((item) => {
+    ctx.fillText("•", 120, y);
+    const used = wrapCanvasText(ctx, item, 154, y, 880, 36, 3);
+    y += used + 24;
+  });
+
+  ctx.fillStyle = "#5d6878";
+  ctx.font = "700 21px -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif";
+  wrapCanvasText(
+    ctx,
+    "공식 TCI 검사가 아닌 교육용 간이 테스트 결과입니다. 진단이나 전문 평가를 대체하지 않습니다.",
+    120,
+    1450,
+    960,
+    30,
+    2,
+  );
+  ctx.fillStyle = "#167d7f";
+  ctx.font = "900 24px -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif";
+  ctx.fillText("jkf87.github.io/tci-personality-site", 120, 1525);
+
+  return canvas;
+}
+
+function canvasToBlob(canvas) {
+  return new Promise((resolve) => {
+    canvas.toBlob(resolve, "image/png", 0.95);
+  });
+}
+
+async function downloadResultImage() {
+  if (!lastTestScores) return;
+  const canvas = createResultCanvas(lastTestScores, lastTestInsights);
+  const link = document.createElement("a");
+  link.download = "tci-profile-result.png";
+  link.href = canvas.toDataURL("image/png");
+  link.click();
+  imageStatus.textContent = "PNG 이미지 저장을 시작했습니다.";
+}
+
+async function shareResultImage() {
+  if (!lastTestScores) return;
+  const canvas = createResultCanvas(lastTestScores, lastTestInsights);
+  const blob = await canvasToBlob(canvas);
+  const file = new File([blob], "tci-profile-result.png", { type: "image/png" });
+
+  if (navigator.canShare?.({ files: [file] })) {
+    await navigator.share({
+      files: [file],
+      title: "내 TCI 프로파일",
+      text: "간이 TCI 스타일 테스트 결과",
+    });
+    imageStatus.textContent = "공유 화면을 열었습니다.";
+    return;
+  }
+
+  imageStatus.textContent = "이 브라우저는 파일 공유를 지원하지 않아 이미지 저장으로 전환했습니다.";
+  await downloadResultImage();
+}
+
 ranges.forEach((input) => input.addEventListener("input", render));
 renderQuestions();
 testForm.addEventListener("change", updateAnsweredCount);
@@ -216,11 +406,16 @@ testForm.addEventListener("submit", (event) => {
   }
 
   const scores = scoreTest();
+  const scoreInsights = buildInsights(scores);
+  lastTestScores = scores;
+  lastTestInsights = scoreInsights;
   renderBars(testChart, scores);
   applyScoresToExplorer(scores);
-  testInsights.innerHTML = buildInsights(scores)
+  testInsights.innerHTML = scoreInsights
     .map((item) => `<li>${item}</li>`)
     .join("");
+  setResultActionsEnabled(true);
+  imageStatus.textContent = "결과 이미지 저장과 공유가 가능합니다.";
 });
 
 resetTest.addEventListener("click", () => {
@@ -228,6 +423,17 @@ resetTest.addEventListener("click", () => {
   updateAnsweredCount();
   testChart.innerHTML = "";
   testInsights.innerHTML = "<li>문항에 답한 뒤 결과 보기를 누르면 해석이 표시됩니다.</li>";
+  lastTestScores = null;
+  lastTestInsights = [];
+  setResultActionsEnabled(false);
+  imageStatus.textContent = "결과가 생성되면 PNG 카드로 저장하거나 공유할 수 있습니다.";
+});
+
+downloadResult.addEventListener("click", downloadResultImage);
+shareResult.addEventListener("click", () => {
+  shareResultImage().catch(() => {
+    imageStatus.textContent = "공유를 완료하지 못했습니다. 이미지 저장을 이용해 주세요.";
+  });
 });
 
 render();
