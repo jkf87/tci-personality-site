@@ -23,6 +23,7 @@
         <span>기질 및 성격검사</span>
       </a>
       <nav class="nav" aria-label="주요 섹션">
+        <a href="#test">간이 테스트</a>
         <a href="#dimensions">7개 차원</a>
         <a href="#explorer">프로파일</a>
         <a href="#compare">MBTI 비교</a>
@@ -52,7 +53,8 @@
             나눠 보는 심리생물학적 성격 모델 기반 검사입니다.
           </p>
           <div class="hero-actions">
-            <a class="button primary" href="#explorer">프로파일 체험</a>
+            <a class="button primary" href="#test">간이 테스트 시작</a>
+            <a class="button secondary" href="#explorer">프로파일 체험</a>
             <a class="button secondary" href="#dimensions">차원 보기</a>
           </div>
         </div>
@@ -66,6 +68,47 @@
         <div>
           <strong>개발자</strong>
           <span>정신의학자 C. Robert Cloninger의 심리생물학적 인성 모델에 기반합니다.</span>
+        </div>
+      </section>
+
+      <section class="section test-section" id="test" aria-labelledby="test-title">
+        <div class="section-heading">
+          <p class="eyebrow">Quick Self Check</p>
+          <h2 id="test-title">간이 TCI 스타일 테스트</h2>
+          <p>
+            각 문항에 1점부터 5점까지 답하면 7개 차원 점수를 계산합니다. 공식 TCI 검사가 아니라
+            자기이해를 위한 교육용 간이 테스트입니다.
+          </p>
+        </div>
+        <div class="test-layout">
+          <form class="test-form" id="test-form">
+            <div class="scale-guide" aria-label="응답 척도">
+              <span>1 전혀 아님</span>
+              <span>2</span>
+              <span>3 보통</span>
+              <span>4</span>
+              <span>5 매우 그럼</span>
+            </div>
+            <div id="question-list"></div>
+            <div class="test-actions">
+              <button class="button primary" type="submit">결과 보기</button>
+              <button class="button secondary" type="button" id="reset-test">초기화</button>
+            </div>
+          </form>
+          <aside class="test-result" aria-live="polite">
+            <div class="result-head">
+              <p class="eyebrow">Result</p>
+              <h3>내 TCI 프로파일</h3>
+              <span id="answered-count">0/28 응답</span>
+            </div>
+            <div class="bar-chart" id="test-chart"></div>
+            <div class="insight-box">
+              <h3>결과 해석</h3>
+              <ul id="test-insights">
+                <li>문항에 답한 뒤 결과 보기를 누르면 해석이 표시됩니다.</li>
+              </ul>
+            </div>
+          </aside>
         </div>
       </section>
 
